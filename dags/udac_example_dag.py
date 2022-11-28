@@ -11,18 +11,20 @@ from helpers import SqlQueries
 
 default_args = {
     'owner': 'udacity',
-    'start_date': datetime.now() - timedelta(hours=1),
+    'start_date': datetime(2018, 11, 1, 0, 0),
     'depends_on_past': False,
     'retries': 3,
     'retry_delay': timedelta(minutes=5),
     'email_on_retry': False,
 }
 
-dag = DAG('udac_example_dag',
-          default_args=default_args,
-          description='Load and transform data in Redshift with Airflow',
-          schedule_interval='0 * * * *',
-          catchup=False)
+dag = DAG(
+    'udac_example_dag',
+    default_args=default_args,
+    description='Load and transform data in Redshift with Airflow',
+    schedule_interval='0 * * * *',
+    catchup=False
+)
 
 start_operator = DummyOperator(
     task_id='Begin_execution', 
@@ -31,11 +33,21 @@ start_operator = DummyOperator(
 
 stage_events_to_redshift = StageToRedshiftOperator(
     task_id='Stage_events',
+    redshift_conn_id="redshift",
+    table="staging_events",
+    s3_bucket="udacity-dend",
+    s3_key="log_data/{execution_date.year}/{execution_date.month}/*.json",
+    json='auto ignorecase',
+    timeformat='epochmillisecs',
     dag=dag
 )
 
 stage_songs_to_redshift = StageToRedshiftOperator(
     task_id='Stage_songs',
+    redshift_conn_id="redshift",
+    table="staging_songs",
+    s3_bucket="udacity-dend",
+    s3_key="song_data/A/A/*/*.json",
     dag=dag
 )
 

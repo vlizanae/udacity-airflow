@@ -6,7 +6,7 @@ from airflow.utils.decorators import apply_defaults
 
 class StageToRedshiftOperator(BaseOperator):
     ui_color = '#358140'
-    template_fields = ('execution_date', )
+    template_fields = ('s3_key', )
     
     copy_sql = """
         COPY {copy}
@@ -22,8 +22,7 @@ class StageToRedshiftOperator(BaseOperator):
                  redshift_conn_id="",
                  table="",
                  s3_bucket="",
-                 s3_key=None,
-                 execution_date=None,
+                 s3_key="",
                  json='auto',
                  delimiter=",",
                  timeformat='auto',
@@ -34,7 +33,7 @@ class StageToRedshiftOperator(BaseOperator):
         self.redshift_conn_id = redshift_conn_id
         self.table = table
         self.s3_bucket = s3_bucket
-        self.execution_date = execution_date
+        self.s3_key = s3_key
         self.json = json
         self.delimiter = delimiter
         self.timeformat = timeformat
@@ -44,13 +43,7 @@ class StageToRedshiftOperator(BaseOperator):
         self.log.info(f"Executing {self.__class__.__name__}")
         
         # Building the query
-        from_ = f's3://{self.s3_bucket}'
-        if self.execution_date:
-            from_ = os.path.join(from_, str(self.execution_date.year), str(self.execution_date.month))
-        if self.s3_key:
-            from_ = os.path.join(from_, self.s3_key)
-        from_ = os.path.join(from_, '*.json')
-
+        from_ = f's3://{os.path.join(self.s3_bucket, self.s3_key.format(**context))}'
         query = self.copy_sql.format(
             copy=self.table,
             from_=from_,

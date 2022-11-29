@@ -8,15 +8,30 @@ class LoadFactOperator(BaseOperator):
 
     @apply_defaults
     def __init__(self,
-                 # Define your operators params (with defaults) here
-                 # Example:
-                 # conn_id = your-connection-name
+                 redshift_conn_id="",
+                 table="",
+                 select_query="",
                  *args, **kwargs):
 
         super(LoadFactOperator, self).__init__(*args, **kwargs)
-        # Map params here
-        # Example:
-        # self.conn_id = conn_id
+        self.redshift_conn_id = redshift_conn_id
+        self.table = table
+        self.select_query = select_query
 
     def execute(self, context):
-        self.log.info('LoadFactOperator not implemented yet')
+        self.log.info(f"Executing {self.__class__.__name__}")
+        
+        # Building the query
+        query = f"""
+        INSERT INTO {self.table}
+        {self.select_query}
+        """
+        self.log.info(f"Query:\n{query}")
+        
+        # Connection
+        self.log.info("Connecting to Redshift")
+        redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
+        
+        # Execution
+        self.log.info("Copying data from Staging to Fact")
+        redshift.run(query)

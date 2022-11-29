@@ -1,7 +1,6 @@
 class Test:
     def __init__(self, query, result, verification, parameters=None):
         self.query = query
-        self.result = result
         self.verification = verification
         self.parameters = parameters or dict()
         
@@ -11,6 +10,23 @@ class Test:
     def get_query(self):
         return self.query.format(**self.parameters)
     
-    def check_against_output(self, output):
-        return verification(self.result, output)
+    def check_against_records(self, records):
+        if len(records) < 1 or len(records[0]) < 1:
+            raise ValueError('Data quality check failed. Query returned no results')
+            
+        elif verification == 'has_rows':
+            if records[0][0] == 0:
+                raise ValueError(f'Data quality check failed:\n{self.get_query()}')
+            else
+                return
+            
+        elif verification == 'no_rows':
+            if records[0][0] != 0:
+                raise ValueError(f'Data quality check failed:\n{self.get_query()}')
+            else
+                return
+            
+        else:
+            raise ValueError(f'Incorrect verification: {self.verification}')
+            
         

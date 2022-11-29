@@ -1,10 +1,13 @@
-from datetime import datetime, timedelta
 import os
+from datetime import datetime, timedelta
+
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators import (StageToRedshiftOperator, LoadFactOperator,
                                 LoadDimensionOperator, DataQualityOperator)
+
 from helpers import SqlQueries
+from tests import registry
 
 # AWS_KEY = os.environ.get('AWS_KEY')
 # AWS_SECRET = os.environ.get('AWS_SECRET')
@@ -97,6 +100,16 @@ load_time_dimension_table = LoadDimensionOperator(
 
 run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
+    redshift_conn_id="redshift",
+    tests={
+        'check_nulls_songplay': {
+            'test': registry['check_no_null'],
+            'params': {
+                'table': 'songplays',
+                'column': 'songplay_id',
+            },
+        },
+    }
     dag=dag
 )
 

@@ -7,7 +7,6 @@ registry = {
             FROM {table}
             WHERE {column} IS NULL
         """,
-        result = "count\n-------\n0\n(1 row)",
-        verification = lambda x, y: x == y
+        verification = 'no_rows'
     ),
 }

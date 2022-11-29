@@ -35,3 +35,6 @@ class LoadFactOperator(BaseOperator):
         # Execution
         self.log.info("Copying data from Staging to Fact")
         redshift.run(query)
+
+        self.log.info("Load successful")
+        

@@ -68,3 +68,5 @@ class StageToRedshiftOperator(BaseOperator):
         # Execution
         self.log.info("Copying data from S3 to Redshift")
         redshift.run(query)
+        
+        self.log.info("Stage successful")

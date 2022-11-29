@@ -41,3 +41,6 @@ class LoadDimensionOperator(BaseOperator):
         
         self.log.info("Copying data from Staging to Dimmension")
         redshift.run(query)
+        
+        self.log.info("Load successful")
+        

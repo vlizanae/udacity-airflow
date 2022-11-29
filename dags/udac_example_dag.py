@@ -8,18 +8,49 @@ from airflow.operators import (StageToRedshiftOperator, LoadFactOperator,
 
 from helpers import SqlQueries
 
-# AWS_KEY = os.environ.get('AWS_KEY')
-# AWS_SECRET = os.environ.get('AWS_SECRET')
+
+class DataQualityQueries:
+    songplay_has_rows = ("""
+        SELECT COUNT(*)
+        FROM songplays
+    """)
+    
+    user_has_rows = ("""
+        SELECT COUNT(*)
+        FROM users
+    """)
+    
+    song_has_rows = ("""
+        SELECT COUNT(*)
+        FROM songs
+    """)
+    
+    artist_has_rows = ("""
+        SELECT COUNT(*)
+        FROM artists
+    """)
+    
+    time_has_rows = ("""
+        SELECT COUNT(*)
+        FROM time
+    """)
+    
+    songplay_check_null = ("""
+        SELECT COUNT(*)
+        FROM songplays
+        WHERE userid IS NULL OR sessionid IS NULL
+    """)
+    
 
 default_args = {
     'owner': 'udacity',
     'start_date': datetime(2018, 11, 1, 0, 0),
     'depends_on_past': False,
-#     'retries': 3,
-#     'retry_delay': timedelta(minutes=5),
-    'retry_delay': timedelta(seconds=5),
+    'retries': 3,
+    'retry_delay': timedelta(minutes=5),
     'email_on_retry': False,
 }
+
 
 dag = DAG(
     'udac_example_dag',
@@ -40,8 +71,7 @@ stage_events_to_redshift = StageToRedshiftOperator(
     aws_conn_id="aws_credentials",
     table="staging_events",
     s3_bucket="udacity-dend",
-#     s3_key="log_data/{execution_date.year}/{execution_date.month}/*.json",
-    s3_key="log_data/2018/11/",
+    s3_key="log_data/{execution_date.year}/{execution_date.month}/",
     json='auto ignorecase',
     timeformat='epochmillisecs',
     dag=dag
@@ -53,8 +83,7 @@ stage_songs_to_redshift = StageToRedshiftOperator(
     aws_conn_id="aws_credentials",
     table="staging_songs",
     s3_bucket="udacity-dend",
-#     s3_key="song_data/*/*/*/*.json",
-    s3_key="song_data/A/A/",
+    s3_key="song_data/",
     dag=dag
 )
 
@@ -105,13 +134,21 @@ load_time_dimension_table = LoadDimensionOperator(
 run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
     redshift_conn_id="redshift",
-    tests_has_rows=[],
-    tests_no_rows=[],
+    tests_has_rows=[
+        DataQualityQueries.songplay_has_rows,
+        DataQualityQueries.user_has_rows,
+        DataQualityQueries.song_has_rows,
+        DataQualityQueries.artist_has_rows,
+        DataQualityQueries.time_has_rows,
+    ],
+    tests_no_rows=[
+        DataQualityQueries.songplay_check_null,
+    ],
     dag=dag
 )
 
 end_operator = DummyOperator(
-    task_id='Stop_execution', 
+    task_id='Stop_execution',
     dag=dag
 )
 

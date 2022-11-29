@@ -4,6 +4,7 @@ from airflow.plugins_manager import AirflowPlugin
 
 import operators
 import helpers
+import tests
 
 # Defining the plugin class
 class UdacityPlugin(AirflowPlugin):

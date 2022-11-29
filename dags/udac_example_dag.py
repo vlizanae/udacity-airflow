@@ -7,7 +7,6 @@ from airflow.operators import (StageToRedshiftOperator, LoadFactOperator,
                                 LoadDimensionOperator, DataQualityOperator)
 
 from helpers import SqlQueries
-from tests import registry
 
 # AWS_KEY = os.environ.get('AWS_KEY')
 # AWS_SECRET = os.environ.get('AWS_SECRET')
@@ -16,8 +15,9 @@ default_args = {
     'owner': 'udacity',
     'start_date': datetime(2018, 11, 1, 0, 0),
     'depends_on_past': False,
-    'retries': 3,
-    'retry_delay': timedelta(minutes=5),
+#     'retries': 3,
+#     'retry_delay': timedelta(minutes=5),
+    'retry_delay': timedelta(seconds=5),
     'email_on_retry': False,
 }
 
@@ -37,9 +37,11 @@ start_operator = DummyOperator(
 stage_events_to_redshift = StageToRedshiftOperator(
     task_id='Stage_events',
     redshift_conn_id="redshift",
+    aws_conn_id="aws_credentials",
     table="staging_events",
     s3_bucket="udacity-dend",
-    s3_key="log_data/{execution_date.year}/{execution_date.month}/*.json",
+#     s3_key="log_data/{execution_date.year}/{execution_date.month}/*.json",
+    s3_key="log_data/2018/11/",
     json='auto ignorecase',
     timeformat='epochmillisecs',
     dag=dag
@@ -48,9 +50,11 @@ stage_events_to_redshift = StageToRedshiftOperator(
 stage_songs_to_redshift = StageToRedshiftOperator(
     task_id='Stage_songs',
     redshift_conn_id="redshift",
+    aws_conn_id="aws_credentials",
     table="staging_songs",
     s3_bucket="udacity-dend",
-    s3_key="song_data/A/A/*/*.json",
+#     s3_key="song_data/*/*/*/*.json",
+    s3_key="song_data/A/A/",
     dag=dag
 )
 
@@ -101,15 +105,8 @@ load_time_dimension_table = LoadDimensionOperator(
 run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
     redshift_conn_id="redshift",
-    tests={
-        'check_nulls_songplay': {
-            'test': registry['check_no_null'],
-            'params': {
-                'table': 'songplays',
-                'column': 'songplay_id',
-            },
-        },
-    }
+    tests_has_rows=[],
+    tests_no_rows=[],
     dag=dag
 )
 
